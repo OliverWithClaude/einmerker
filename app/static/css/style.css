@@ -188,6 +188,19 @@ main {
     color: #fff;
 }
 
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
 /* Search Bar */
 .search-bar {
     margin-bottom: 1.5rem;
@@ -212,6 +225,19 @@ main {
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.item.private {
+    border-left: 4px solid #95a5a6;
+}
+
+.private-badge {
+    background: #95a5a6;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-right: 5px;
 }
 
 .item-header {
