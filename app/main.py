@@ -52,21 +52,34 @@ async def health_check():
     return {"status": "healthy", "app": settings.app_name}
 
 
-@app.get("/seed", response_class=PlainTextResponse)
-async def seed(db: AsyncSession = Depends(get_db)):
-    """Public endpoint listing all public bookmark URLs for YaCy crawling."""
+INTERVAL_DESCRIPTIONS = {
+    "daily": "These bookmarks point to frequently updated content like news sites and should be crawled daily.",
+    "weekly": "These bookmarks point to regularly updated content and should be crawled weekly.",
+    "monthly": "These bookmarks point to occasionally updated content and should be crawled monthly.",
+    "once": "These bookmarks point to static content that only needs to be crawled once.",
+}
+
+
+@app.get("/seed", response_class=HTMLResponse)
+async def seed_index(request: Request):
+    """Index page for seed endpoints."""
+    return templates.TemplateResponse("seed_index.html", {"request": request})
+
+
+@app.get("/seed/{interval}", response_class=HTMLResponse)
+async def seed_by_interval(request: Request, interval: str, db: AsyncSession = Depends(get_db)):
+    """Public endpoint listing bookmark URLs for YaCy crawling by interval."""
+    if interval not in INTERVAL_DESCRIPTIONS:
+        return HTMLResponse(content="Invalid interval. Use: daily, weekly, monthly, or once", status_code=404)
+
     result = await db.execute(
-        select(Bookmark).where(Bookmark.public == True).order_by(Bookmark.created_at.desc())
+        select(Bookmark).where(Bookmark.crawl_interval == interval).order_by(Bookmark.created_at.desc())
     )
     bookmarks = result.scalars().all()
-    urls = [b.url for b in bookmarks]
-    return "\n".join(urls)
 
-
-@app.get("/seed.json", response_model=List[PublicBookmarkResponse])
-async def seed_json(db: AsyncSession = Depends(get_db)):
-    """Public endpoint listing all public bookmarks as JSON."""
-    result = await db.execute(
-        select(Bookmark).where(Bookmark.public == True).order_by(Bookmark.created_at.desc())
-    )
-    return result.scalars().all()
+    return templates.TemplateResponse("seed.html", {
+        "request": request,
+        "interval": interval,
+        "description": INTERVAL_DESCRIPTIONS[interval],
+        "bookmarks": bookmarks
+    })

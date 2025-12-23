@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>einmerker - {{ interval | capitalize }} Crawl Seeds</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 { color: #2c3e50; }
+        .description {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0 2rem 0;
+            border-left: 4px solid #3498db;
+        }
+        .stats {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .bookmark-list {
+            list-style: none;
+            padding: 0;
+        }
+        .bookmark-list li {
+            background: #fff;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .bookmark-list a {
+            color: #3498db;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .bookmark-list a:hover {
+            text-decoration: underline;
+        }
+        .bookmark-title {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .bookmark-desc {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: #3498db;
+            text-decoration: none;
+        }
+        .empty {
+            background: #fff;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ interval | capitalize }} Crawl Seeds</h1>
+
+    <div class="description">
+        <p>{{ description }}</p>
+    </div>
+
+    <p class="stats">{{ bookmarks | length }} bookmark(s) in this list</p>
+
+    {% if bookmarks %}
+    <ul class="bookmark-list">
+        {% for bookmark in bookmarks %}
+        <li>
+            <span class="bookmark-title">{{ bookmark.title }}</span>
+            <a href="{{ bookmark.url }}" target="_blank" rel="noopener">{{ bookmark.url }}</a>
+            {% if bookmark.description %}
+            <p class="bookmark-desc">{{ bookmark.description }}</p>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">
+        <p>No bookmarks in this category yet.</p>
+    </div>
+    {% endif %}
+
+    <a href="/seed" class="back-link">&larr; Back to seed index</a>
+</body>
+</html>

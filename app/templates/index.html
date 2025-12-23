@@ -44,9 +44,15 @@
             <input type="url" id="bookmarkUrl" placeholder="URL" required>
             <input type="text" id="bookmarkDescription" placeholder="Description">
             <input type="text" id="bookmarkTags" placeholder="Tags (comma-separated)">
-            <label class="checkbox-label">
-                <input type="checkbox" id="bookmarkPublic" checked>
-                Public (visible in /seed)
+            <label class="select-label">
+                Crawl interval:
+                <select id="bookmarkCrawlInterval">
+                    <option value="daily">Daily (news sites)</option>
+                    <option value="weekly" selected>Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="once">Once (static content)</option>
+                    <option value="never">Never (private)</option>
+                </select>
             </label>
             <button onclick="saveBookmark()">Save</button>
             <button onclick="hideAddBookmark()" class="cancel">Cancel</button>
@@ -232,12 +238,12 @@ function renderBookmarks(bookmarks) {
         return;
     }
     list.innerHTML = bookmarks.map(b => `
-        <div class="item ${b.public ? '' : 'private'}">
+        <div class="item ${b.crawl_interval === 'never' ? 'private' : ''}">
             <div class="item-header">
                 <a href="${b.url}" target="_blank" class="item-title">${b.title}</a>
                 <div class="item-actions">
-                    ${b.public ? '' : '<span class="private-badge">Private</span>'}
-                    <button onclick="editBookmark(${b.id}, '${b.title.replace(/'/g, "\\'")}', '${b.url.replace(/'/g, "\\'")}', '${(b.description || '').replace(/'/g, "\\'")}', '${(b.tags || '').replace(/'/g, "\\'")}', ${b.public})">Edit</button>
+                    <span class="interval-badge interval-${b.crawl_interval}">${b.crawl_interval}</span>
+                    <button onclick="editBookmark(${b.id}, '${b.title.replace(/'/g, "\\'")}', '${b.url.replace(/'/g, "\\'")}', '${(b.description || '').replace(/'/g, "\\'")}', '${(b.tags || '').replace(/'/g, "\\'")}', '${b.crawl_interval}')">Edit</button>
                     <button onclick="deleteBookmark(${b.id})" class="delete">Delete</button>
                 </div>
             </div>
@@ -254,17 +260,17 @@ function showAddBookmark() {
     document.getElementById('bookmarkUrl').value = '';
     document.getElementById('bookmarkDescription').value = '';
     document.getElementById('bookmarkTags').value = '';
-    document.getElementById('bookmarkPublic').checked = true;
+    document.getElementById('bookmarkCrawlInterval').value = 'weekly';
     document.getElementById('addBookmarkForm').style.display = 'block';
 }
 
-function editBookmark(id, title, url, description, tags, isPublic) {
+function editBookmark(id, title, url, description, tags, crawlInterval) {
     document.getElementById('editBookmarkId').value = id;
     document.getElementById('bookmarkTitle').value = title;
     document.getElementById('bookmarkUrl').value = url;
     document.getElementById('bookmarkDescription').value = description;
     document.getElementById('bookmarkTags').value = tags;
-    document.getElementById('bookmarkPublic').checked = isPublic;
+    document.getElementById('bookmarkCrawlInterval').value = crawlInterval;
     document.getElementById('addBookmarkForm').style.display = 'block';
 }
 
@@ -275,7 +281,7 @@ function hideAddBookmark() {
     document.getElementById('bookmarkUrl').value = '';
     document.getElementById('bookmarkDescription').value = '';
     document.getElementById('bookmarkTags').value = '';
-    document.getElementById('bookmarkPublic').checked = true;
+    document.getElementById('bookmarkCrawlInterval').value = 'weekly';
 }
 
 async function saveBookmark() {
@@ -285,7 +291,7 @@ async function saveBookmark() {
         url: document.getElementById('bookmarkUrl').value,
         description: document.getElementById('bookmarkDescription').value,
         tags: document.getElementById('bookmarkTags').value,
-        public: document.getElementById('bookmarkPublic').checked
+        crawl_interval: document.getElementById('bookmarkCrawlInterval').value
     };
     try {
         const url = id ? `${API_BASE}/bookmarks/${id}` : `${API_BASE}/bookmarks`;

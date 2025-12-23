@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -12,7 +12,7 @@ class Bookmark(Base):
     url = Column(String(2048), nullable=False)
     description = Column(Text, nullable=True)
     tags = Column(String(500), nullable=True)  # Comma-separated tags
-    public = Column(Boolean, default=True, nullable=False)
+    crawl_interval = Column(String(20), default="weekly", nullable=False)  # daily, weekly, monthly, once, never
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

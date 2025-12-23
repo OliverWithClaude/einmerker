@@ -201,6 +201,21 @@ main {
     margin: 0;
 }
 
+.select-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.select-label select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background: #fff;
+}
+
 /* Search Bar */
 .search-bar {
     margin-bottom: 1.5rem;
@@ -239,6 +254,20 @@ main {
     font-size: 0.75rem;
     margin-right: 5px;
 }
+
+.interval-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-right: 5px;
+    color: #fff;
+}
+
+.interval-daily { background: #e74c3c; }
+.interval-weekly { background: #3498db; }
+.interval-monthly { background: #9b59b6; }
+.interval-once { background: #27ae60; }
+.interval-never { background: #95a5a6; }
 
 .item-header {
     display: flex;

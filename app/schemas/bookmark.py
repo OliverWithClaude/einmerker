@@ -1,6 +1,10 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, field_validator
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
+
+
+CRAWL_INTERVALS = ["daily", "weekly", "monthly", "once", "never"]
+CrawlInterval = Literal["daily", "weekly", "monthly", "once", "never"]
 
 
 class BookmarkBase(BaseModel):
@@ -8,7 +12,7 @@ class BookmarkBase(BaseModel):
     url: str
     description: Optional[str] = None
     tags: Optional[str] = None
-    public: bool = True
+    crawl_interval: CrawlInterval = "weekly"
 
 
 class BookmarkCreate(BookmarkBase):
@@ -20,7 +24,7 @@ class BookmarkUpdate(BaseModel):
     url: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[str] = None
-    public: Optional[bool] = None
+    crawl_interval: Optional[CrawlInterval] = None
 
 
 class BookmarkResponse(BookmarkBase):
