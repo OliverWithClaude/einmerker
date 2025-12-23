@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}einmerker{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">einmerker</a>
+            <div class="nav-links" id="navLinks">
+                <a href="#" onclick="showBookmarks()">Bookmarks</a>
+                <a href="#" onclick="showNotes()">Notes</a>
+                <span id="authLinks">
+                    <a href="#" onclick="showLogin()">Login</a>
+                    <a href="#" onclick="showRegister()">Register</a>
+                </span>
+                <span id="userLinks" style="display: none;">
+                    <span id="username"></span>
+                    <a href="#" onclick="logout()">Logout</a>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 einmerker</p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="app">
+    <!-- Auth Forms -->
+    <div id="loginForm" class="auth-form" style="display: none;">
+        <h2>Login</h2>
+        <form onsubmit="handleLogin(event)">
+            <input type="text" id="loginUsername" placeholder="Username" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p class="error" id="loginError"></p>
+    </div>
+
+    <div id="registerForm" class="auth-form" style="display: none;">
+        <h2>Register</h2>
+        <form onsubmit="handleRegister(event)">
+            <input type="text" id="regUsername" placeholder="Username" required>
+            <input type="email" id="regEmail" placeholder="Email" required>
+            <input type="password" id="regPassword" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+        <p class="error" id="registerError"></p>
+    </div>
+
+    <!-- Welcome Section -->
+    <div id="welcomeSection">
+        <h1>Welcome to einmerker</h1>
+        <p>Your personal bookmarking and notes application.</p>
+        <p>Please <a href="#" onclick="showLogin()">login</a> or <a href="#" onclick="showRegister()">register</a> to get started.</p>
+    </div>
+
+    <!-- Bookmarks Section -->
+    <div id="bookmarksSection" style="display: none;">
+        <div class="section-header">
+            <h2>Bookmarks</h2>
+            <button onclick="showAddBookmark()">+ Add Bookmark</button>
+        </div>
+
+        <div id="addBookmarkForm" class="add-form" style="display: none;">
+            <input type="text" id="bookmarkTitle" placeholder="Title" required>
+            <input type="url" id="bookmarkUrl" placeholder="URL" required>
+            <input type="text" id="bookmarkDescription" placeholder="Description">
+            <input type="text" id="bookmarkTags" placeholder="Tags (comma-separated)">
+            <button onclick="addBookmark()">Save</button>
+            <button onclick="hideAddBookmark()" class="cancel">Cancel</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="bookmarkSearch" placeholder="Search bookmarks..." onkeyup="searchBookmarks()">
+        </div>
+
+        <div id="bookmarksList" class="items-list"></div>
+    </div>
+
+    <!-- Notes Section -->
+    <div id="notesSection" style="display: none;">
+        <div class="section-header">
+            <h2>Notes</h2>
+            <button onclick="showAddNote()">+ Add Note</button>
+        </div>
+
+        <div id="addNoteForm" class="add-form" style="display: none;">
+            <input type="text" id="noteTitle" placeholder="Title" required>
+            <textarea id="noteContent" placeholder="Content" rows="5"></textarea>
+            <input type="text" id="noteTags" placeholder="Tags (comma-separated)">
+            <button onclick="addNote()">Save</button>
+            <button onclick="hideAddNote()" class="cancel">Cancel</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="noteSearch" placeholder="Search notes..." onkeyup="searchNotes()">
+        </div>
+
+        <div id="notesList" class="items-list"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const API_BASE = '/api';
+let token = localStorage.getItem('token');
+let currentUser = null;
+
+// Check auth on load
+document.addEventListener('DOMContentLoaded', () => {
+    if (token) {
+        checkAuth();
+    }
+});
+
+async function checkAuth() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            currentUser = await res.json();
+            showLoggedIn();
+        } else {
+            logout();
+        }
+    } catch (e) {
+        logout();
+    }
+}
+
+function showLoggedIn() {
+    document.getElementById('authLinks').style.display = 'none';
+    document.getElementById('userLinks').style.display = 'inline';
+    document.getElementById('username').textContent = currentUser.username;
+    document.getElementById('welcomeSection').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
+    showBookmarks();
+}
+
+function showLogin() {
+    hideAll();
+    document.getElementById('loginForm').style.display = 'block';
+}
+
+function showRegister() {
+    hideAll();
+    document.getElementById('registerForm').style.display = 'block';
+}
+
+function hideAll() {
+    document.getElementById('welcomeSection').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('bookmarksSection').style.display = 'none';
+    document.getElementById('notesSection').style.display = 'none';
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            body: formData
+        });
+        if (res.ok) {
+            const data = await res.json();
+            token = data.access_token;
+            localStorage.setItem('token', token);
+            await checkAuth();
+        } else {
+            document.getElementById('loginError').textContent = 'Invalid credentials';
+        }
+    } catch (e) {
+        document.getElementById('loginError').textContent = 'Login failed';
+    }
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        if (res.ok) {
+            showLogin();
+            document.getElementById('loginError').textContent = 'Registration successful! Please login.';
+            document.getElementById('loginError').style.color = 'green';
+        } else {
+            const data = await res.json();
+            document.getElementById('registerError').textContent = data.detail || 'Registration failed';
+        }
+    } catch (e) {
+        document.getElementById('registerError').textContent = 'Registration failed';
+    }
+}
+
+function logout() {
+    token = null;
+    currentUser = null;
+    localStorage.removeItem('token');
+    document.getElementById('authLinks').style.display = 'inline';
+    document.getElementById('userLinks').style.display = 'none';
+    hideAll();
+    document.getElementById('welcomeSection').style.display = 'block';
+}
+
+// Bookmarks
+async function showBookmarks() {
+    if (!token) return showLogin();
+    hideAll();
+    document.getElementById('bookmarksSection').style.display = 'block';
+    await loadBookmarks();
+}
+
+async function loadBookmarks(search = '') {
+    const url = search ? `${API_BASE}/bookmarks?search=${encodeURIComponent(search)}` : `${API_BASE}/bookmarks`;
+    try {
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const bookmarks = await res.json();
+            renderBookmarks(bookmarks);
+        }
+    } catch (e) {
+        console.error('Failed to load bookmarks', e);
+    }
+}
+
+function renderBookmarks(bookmarks) {
+    const list = document.getElementById('bookmarksList');
+    if (bookmarks.length === 0) {
+        list.innerHTML = '<p class="empty">No bookmarks yet. Add your first bookmark!</p>';
+        return;
+    }
+    list.innerHTML = bookmarks.map(b => `
+        <div class="item">
+            <div class="item-header">
+                <a href="${b.url}" target="_blank" class="item-title">${b.title}</a>
+                <div class="item-actions">
+                    <button onclick="deleteBookmark(${b.id})">Delete</button>
+                </div>
+            </div>
+            <p class="item-url">${b.url}</p>
+            ${b.description ? `<p class="item-desc">${b.description}</p>` : ''}
+            ${b.tags ? `<p class="item-tags">${b.tags}</p>` : ''}
+        </div>
+    `).join('');
+}
+
+function showAddBookmark() {
+    document.getElementById('addBookmarkForm').style.display = 'block';
+}
+
+function hideAddBookmark() {
+    document.getElementById('addBookmarkForm').style.display = 'none';
+    document.getElementById('bookmarkTitle').value = '';
+    document.getElementById('bookmarkUrl').value = '';
+    document.getElementById('bookmarkDescription').value = '';
+    document.getElementById('bookmarkTags').value = '';
+}
+
+async function addBookmark() {
+    const data = {
+        title: document.getElementById('bookmarkTitle').value,
+        url: document.getElementById('bookmarkUrl').value,
+        description: document.getElementById('bookmarkDescription').value,
+        tags: document.getElementById('bookmarkTags').value
+    };
+    try {
+        const res = await fetch(`${API_BASE}/bookmarks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            hideAddBookmark();
+            await loadBookmarks();
+        }
+    } catch (e) {
+        console.error('Failed to add bookmark', e);
+    }
+}
+
+async function deleteBookmark(id) {
+    if (!confirm('Delete this bookmark?')) return;
+    try {
+        await fetch(`${API_BASE}/bookmarks/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        await loadBookmarks();
+    } catch (e) {
+        console.error('Failed to delete bookmark', e);
+    }
+}
+
+function searchBookmarks() {
+    const search = document.getElementById('bookmarkSearch').value;
+    loadBookmarks(search);
+}
+
+// Notes
+async function showNotes() {
+    if (!token) return showLogin();
+    hideAll();
+    document.getElementById('notesSection').style.display = 'block';
+    await loadNotes();
+}
+
+async function loadNotes(search = '') {
+    const url = search ? `${API_BASE}/notes?search=${encodeURIComponent(search)}` : `${API_BASE}/notes`;
+    try {
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const notes = await res.json();
+            renderNotes(notes);
+        }
+    } catch (e) {
+        console.error('Failed to load notes', e);
+    }
+}
+
+function renderNotes(notes) {
+    const list = document.getElementById('notesList');
+    if (notes.length === 0) {
+        list.innerHTML = '<p class="empty">No notes yet. Add your first note!</p>';
+        return;
+    }
+    list.innerHTML = notes.map(n => `
+        <div class="item">
+            <div class="item-header">
+                <span class="item-title">${n.title}</span>
+                <div class="item-actions">
+                    <button onclick="deleteNote(${n.id})">Delete</button>
+                </div>
+            </div>
+            ${n.content ? `<p class="item-content">${n.content}</p>` : ''}
+            ${n.tags ? `<p class="item-tags">${n.tags}</p>` : ''}
+        </div>
+    `).join('');
+}
+
+function showAddNote() {
+    document.getElementById('addNoteForm').style.display = 'block';
+}
+
+function hideAddNote() {
+    document.getElementById('addNoteForm').style.display = 'none';
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteContent').value = '';
+    document.getElementById('noteTags').value = '';
+}
+
+async function addNote() {
+    const data = {
+        title: document.getElementById('noteTitle').value,
+        content: document.getElementById('noteContent').value,
+        tags: document.getElementById('noteTags').value
+    };
+    try {
+        const res = await fetch(`${API_BASE}/notes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            hideAddNote();
+            await loadNotes();
+        }
+    } catch (e) {
+        console.error('Failed to add note', e);
+    }
+}
+
+async function deleteNote(id) {
+    if (!confirm('Delete this note?')) return;
+    try {
+        await fetch(`${API_BASE}/notes/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        await loadNotes();
+    } catch (e) {
+        console.error('Failed to delete note', e);
+    }
+}
+
+function searchNotes() {
+    const search = document.getElementById('noteSearch').value;
+    loadNotes(search);
+}
+</script>
+{% endblock %}
