@@ -39,11 +39,12 @@
         </div>
 
         <div id="addBookmarkForm" class="add-form" style="display: none;">
+            <input type="hidden" id="editBookmarkId">
             <input type="text" id="bookmarkTitle" placeholder="Title" required>
             <input type="url" id="bookmarkUrl" placeholder="URL" required>
             <input type="text" id="bookmarkDescription" placeholder="Description">
             <input type="text" id="bookmarkTags" placeholder="Tags (comma-separated)">
-            <button onclick="addBookmark()">Save</button>
+            <button onclick="saveBookmark()">Save</button>
             <button onclick="hideAddBookmark()" class="cancel">Cancel</button>
         </div>
 
@@ -231,7 +232,8 @@ function renderBookmarks(bookmarks) {
             <div class="item-header">
                 <a href="${b.url}" target="_blank" class="item-title">${b.title}</a>
                 <div class="item-actions">
-                    <button onclick="deleteBookmark(${b.id})">Delete</button>
+                    <button onclick="editBookmark(${b.id}, '${b.title.replace(/'/g, "\\'")}', '${b.url.replace(/'/g, "\\'")}', '${(b.description || '').replace(/'/g, "\\'")}', '${(b.tags || '').replace(/'/g, "\\'")}')">Edit</button>
+                    <button onclick="deleteBookmark(${b.id})" class="delete">Delete</button>
                 </div>
             </div>
             <p class="item-url">${b.url}</p>
@@ -242,18 +244,34 @@ function renderBookmarks(bookmarks) {
 }
 
 function showAddBookmark() {
+    document.getElementById('editBookmarkId').value = '';
+    document.getElementById('bookmarkTitle').value = '';
+    document.getElementById('bookmarkUrl').value = '';
+    document.getElementById('bookmarkDescription').value = '';
+    document.getElementById('bookmarkTags').value = '';
+    document.getElementById('addBookmarkForm').style.display = 'block';
+}
+
+function editBookmark(id, title, url, description, tags) {
+    document.getElementById('editBookmarkId').value = id;
+    document.getElementById('bookmarkTitle').value = title;
+    document.getElementById('bookmarkUrl').value = url;
+    document.getElementById('bookmarkDescription').value = description;
+    document.getElementById('bookmarkTags').value = tags;
     document.getElementById('addBookmarkForm').style.display = 'block';
 }
 
 function hideAddBookmark() {
     document.getElementById('addBookmarkForm').style.display = 'none';
+    document.getElementById('editBookmarkId').value = '';
     document.getElementById('bookmarkTitle').value = '';
     document.getElementById('bookmarkUrl').value = '';
     document.getElementById('bookmarkDescription').value = '';
     document.getElementById('bookmarkTags').value = '';
 }
 
-async function addBookmark() {
+async function saveBookmark() {
+    const id = document.getElementById('editBookmarkId').value;
     const data = {
         title: document.getElementById('bookmarkTitle').value,
         url: document.getElementById('bookmarkUrl').value,
@@ -261,8 +279,10 @@ async function addBookmark() {
         tags: document.getElementById('bookmarkTags').value
     };
     try {
-        const res = await fetch(`${API_BASE}/bookmarks`, {
-            method: 'POST',
+        const url = id ? `${API_BASE}/bookmarks/${id}` : `${API_BASE}/bookmarks`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -274,7 +294,7 @@ async function addBookmark() {
             await loadBookmarks();
         }
     } catch (e) {
-        console.error('Failed to add bookmark', e);
+        console.error('Failed to save bookmark', e);
     }
 }
 

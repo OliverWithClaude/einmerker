@@ -234,12 +234,21 @@ a.item-title:hover {
 
 .item-actions button {
     padding: 5px 10px;
-    background: #e74c3c;
+    background: #3498db;
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
+    margin-left: 5px;
+}
+
+.item-actions button.delete {
+    background: #e74c3c;
+}
+
+.item-actions button:hover {
+    opacity: 0.9;
 }
 
 .item-url {
